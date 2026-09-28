@@ -1,0 +1,322 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Parque Pehuen</title>
+<style>
+body{font-family:Arial;margin:0;background:#f5f6f8;color:#172033}.wrap{max-width:1100px;margin:auto;padding:28px}
+.top{display:flex;justify-content:space-between;align-items:end;margin-bottom:20px}h1{margin:0 0 5px}h2{font-size:17px}.muted{color:#667085;font-size:13px}
+select,button{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;background:white}button.active{background:#334155;color:white}
+.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(3,1fr)}.card{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:18px}
+.value{font-size:34px;font-weight:700;margin:8px 0}.bar{height:14px;background:#edf0f3;border-radius:9px;overflow:hidden;margin-top:8px}.fill{height:100%}
+.tipogrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.tipo{padding:14px;border:1px solid #e5e7eb;border-radius:12px;background:#fafbfc}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #eee;text-align:left}th{font-size:11px;color:#667085}
+@media(max-width:750px){.kpis,.tipogrid{grid-template-columns:1fr 1fr}.top{flex-direction:column;align-items:start;gap:12px}}@media(max-width:500px){.kpis,.tipogrid{grid-template-columns:1fr}}
+</style>
+<style id="mobile-responsive">
+* { box-sizing: border-box; }
+html, body { max-width: 100%; overflow-x: hidden; }
+body { -webkit-text-size-adjust: 100%; }
+@media (max-width: 700px) {
+  body { margin: 0; padding: 12px; font-size: 14px; }
+  .container, .dashboard, main, .content, .wrapper { width: 100% !important; max-width: 100% !important; margin: 0 auto !important; }
+  h1 { font-size: 24px !important; line-height: 1.15 !important; }
+  h2 { font-size: 19px !important; }
+  h3 { font-size: 16px !important; }
+  .header, header { padding: 14px !important; }
+  .kpis, .cards, .stats, .metrics, .grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .card, .kpi, .metric { min-width: 0 !important; width: 100% !important; padding: 14px !important; }
+  table { width: 100% !important; font-size: 12px !important; }
+  th, td { padding: 7px 6px !important; white-space: nowrap; }
+  .table-container, .table-wrapper { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  button, select { min-height: 42px; font-size: 14px !important; }
+  .filters, .tabs, .buttons, .controls { display: flex !important; flex-wrap: wrap !important; gap: 7px !important; }
+  .filters > *, .tabs > *, .buttons > * { flex: 1 1 auto; }
+  canvas, svg, img { max-width: 100% !important; height: auto; }
+}
+</style>
+
+<style>
+/* Interactive typology pie */
+.typology-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr);gap:18px;align-items:stretch}
+.typology-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.typology-button{border:1px solid #d7dce2;background:#fff;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;transition:.15s}
+.typology-button:hover{border-color:#7b8794;transform:translateY(-1px)}
+.typology-button.active{background:#1f2937;color:#fff;border-color:#1f2937}
+.typology-pie-card{border:1px solid #e5e7eb;border-radius:16px;background:#fff;padding:16px;min-height:310px}
+.typology-pie-card h3{margin:0 0 2px;font-size:18px}
+.typology-pie-card .pie-subtitle{color:#6b7280;font-size:13px;margin-bottom:10px}
+.pie-wrap{display:flex;align-items:center;gap:18px;justify-content:center;min-height:220px}
+.pie-svg{width:190px;height:190px;flex:0 0 190px}
+.pie-center-number{font-size:25px;font-weight:800;fill:#111827}
+.pie-center-label{font-size:11px;fill:#6b7280}
+.pie-legend{display:grid;gap:10px;min-width:125px}
+.pie-legend-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.pie-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.pie-value{font-weight:800;margin-left:auto}
+.pie-project-tabs{display:flex;gap:6px;margin-bottom:6px}
+.pie-project-tab{border:1px solid #e5e7eb;background:#f8fafc;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+.pie-project-tab.active{background:#111827;color:#fff;border-color:#111827}
+@media(max-width:760px){
+  .typology-dashboard-grid{grid-template-columns:1fr}
+  .pie-wrap{flex-direction:column}
+}
+</style></head><body><div class="wrap">
+<div class="top"><div><div class="muted">Dashboard comercial</div><h1>Parque Pehuen I y II</h1><div class="muted">Ventas por proyecto y tipología</div></div>
+<label class="muted">Proyecto<br><select id="sel"><option value="TODOS">Parque Pehuen I + II</option><option value="PPI">Parque Pehuen I</option><option value="PPII">Parque Pehuen II</option></select></label></div>
+
+<div class="grid kpis"><div class="card"><div class="muted">Total</div><div class="value" id="total"></div></div>
+<div class="card"><div class="muted">Vendido</div><div class="value" id="vendido"></div><div class="muted" id="vpct"></div><div class="bar"><div id="vbar" class="fill" style="background:#334155"></div></div></div>
+<div class="card"><div class="muted">Disponible</div><div class="value" id="disponible"></div><div class="muted" id="dpct"></div><div class="bar"><div id="dbar" class="fill" style="background:#94a3b8"></div></div></div></div>
+
+<div class="card" style="margin-top:14px"><h2>Ventas por tipología</h2><div class="muted">Se muestran Total, Vendido y Disponible</div>
+<div class="tabs" id="tabs"></div><div class="tipogrid" id="tipos"></div></div>
+
+<div class="card" style="margin-top:14px"><!-- TIPOLOGIA_PIE_START -->
+<section class="typology-dashboard-grid" id="interactive-typologies">
+  <div>
+    <div class="section-title"><h2>Tipologías</h2></div>
+    <p style="color:#6b7280;font-size:13px;margin-top:-4px">Presiona una tipología para actualizar el gráfico de torta.</p>
+    <div class="typology-buttons" id="typologyButtons"></div>
+    <div id="typologyTableMount"></div>
+  </div>
+
+  <div class="typology-pie-card">
+    <h3 id="pieTitle">Tipología C</h3>
+    <div class="pie-subtitle" id="pieSubtitle">PPI · Vendido vs. Disponible</div>
+    <div class="pie-project-tabs">
+      <button type="button" class="pie-project-tab active" data-project="PPI">PPI</button>
+      <button type="button" class="pie-project-tab" data-project="PPII">PPII</button>
+    </div>
+    <div class="pie-wrap">
+      <svg class="pie-svg" viewBox="0 0 220 220" role="img" aria-label="Gráfico de torta de vendido y disponible">
+        <circle cx="110" cy="110" r="78" fill="#f3f4f6"></circle>
+        <path id="pieSold" fill="#111827"></path>
+        <path id="pieAvailable" fill="#d1d5db"></path>
+        <circle cx="110" cy="110" r="48" fill="#fff"></circle>
+        <text x="110" y="106" text-anchor="middle" class="pie-center-number" id="pieTotal">35</text>
+        <text x="110" y="124" text-anchor="middle" class="pie-center-label">unidades</text>
+      </svg>
+      <div class="pie-legend">
+        <div class="pie-legend-row"><span class="pie-dot" style="background:#111827"></span><span>Vendido</span><span class="pie-value" id="pieSoldValue">30</span></div>
+        <div class="pie-legend-row"><span class="pie-dot" style="background:#d1d5db"></span><span>Disponible</span><span class="pie-value" id="pieAvailableValue">5</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const DATA = {"A": {"PPI": [34, 34, 0], "PPII": [34, 34, 0]}, "A1": {"PPI": [1, 0, 1], "PPII": [1, 0, 1]}, "B": {"PPI": [21, 21, 0], "PPII": [21, 21, 0]}, "B1": {"PPI": [12, 12, 0], "PPII": [12, 12, 0]}, "C": {"PPI": [35, 30, 5], "PPII": [35, 3, 32]}, "D": {"PPI": [35, 32, 3], "PPII": [35, 5, 30]}, "E":  {"PPI": [2, 2, 0], "PPII": [2, 2, 0]}};
+  const labels = Object.keys(DATA);
+  let selected = "C";
+  let project = "PPI";
+
+  const buttons = document.getElementById("typologyButtons");
+  const pieSold = document.getElementById("pieSold");
+  const pieAvailable = document.getElementById("pieAvailable");
+  const pieTitle = document.getElementById("pieTitle");
+  const pieSubtitle = document.getElementById("pieSubtitle");
+  const pieTotal = document.getElementById("pieTotal");
+  const pieSoldValue = document.getElementById("pieSoldValue");
+  const pieAvailableValue = document.getElementById("pieAvailableValue");
+
+  labels.forEach(t => {
+    const b=document.createElement("button");
+    b.type="button"; b.className="typology-button"+(t===selected?" active":"");
+    b.textContent=t;
+    b.addEventListener("click",()=>{selected=t; render();});
+    buttons.appendChild(b);
+  });
+
+  document.querySelectorAll(".pie-project-tab").forEach(b=>{
+    b.addEventListener("click",()=>{
+      project=b.dataset.project;
+      document.querySelectorAll(".pie-project-tab").forEach(x=>x.classList.toggle("active",x===b));
+      render();
+    });
+  });
+
+  function arcPath(cx,cy,r,start,end){
+    const x1=cx+r*Math.cos(start), y1=cy+r*Math.sin(start);
+    const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end);
+    const large=(end-start)>Math.PI?1:0;
+    return "M "+cx+" "+cy+" L "+x1+" "+y1+" A "+r+" "+r+" 0 "+large+" 1 "+x2+" "+y2+" Z";
+  }
+
+  function render(){
+    const [total,sold,available]=DATA[selected][project];
+    pieTitle.textContent="Tipología "+selected;
+    pieSubtitle.textContent=project+" · Vendido vs. Disponible";
+    pieTotal.textContent=total;
+    pieSoldValue.textContent=sold;
+    pieAvailableValue.textContent=available;
+
+    const start=-Math.PI/2;
+    if(total<=0){pieSold.setAttribute("d","");pieAvailable.setAttribute("d","");return;}
+    const soldEnd=start+(sold/total)*Math.PI*2;
+    const availEnd=start+Math.PI*2;
+    pieSold.setAttribute("d", sold>=total ? arcPath(110,110,78,start,start+Math.PI*2-0.0001) : arcPath(110,110,78,start,soldEnd));
+    pieAvailable.setAttribute("d", available<=0 ? "" : arcPath(110,110,78,soldEnd,availEnd));
+    document.querySelectorAll(".typology-button").forEach(b=>b.classList.toggle("active",b.textContent===selected));
+  }
+  render();
+})();
+</script>
+<!-- TIPOLOGIA_PIE_END -->
+<h2>Resumen</h2>
+<div class="typology-note" style="margin:10px 0;padding:10px 12px;border-radius:10px;background:#f3f4f6;font-size:12px;line-height:1.4;">
+  <strong>Nota:</strong> Las unidades bloqueadas se consideran disponibles, ya que forman parte del stock no vendido.
+</div>
+<div style="margin:10px 0;padding:10px 12px;border-radius:10px;background:#f3f4f6;font-size:12px;line-height:1.4;">
+<strong>Bloqueados incluidos en Disponible:</strong> las unidades bloqueadas se consideran parte del stock disponible/no vendido.
+</div><table><tr><th>Proyecto</th><th>Total</th><th>Vendido</th><th>Disponible</th></tr>
+<tr><td>Parque Pehuen I</td><td>140</td><td>131</td><td>9</td></tr><tr><td>Parque Pehuen II</td><td>140</td><td>71</td><td>69</td></tr><tr><td><b>Total</b></td><td><b>280</b></td><td><b>202</b></td><td><b>78</b></td></tr></table></div>
+<div class="muted" style="margin-top:12px">Fuente: Consolidado PPI y Consolidado PPII del archivo Parque Pehuen A La Fecha. Los bloqueados se excluyen de vendido y se incluyen en disponible.</div>
+</div>
+<script>
+const D={"PPI": {"total": 140, "vendido": 131, "disponible": 9}, "PPII": {"total": 140, "vendido": 71, "disponible": 69}, "TODOS": {"total": 280, "vendido": 202, "disponible": 78}};
+const T={"A": {"PPI": {"total": 34, "vendido": 34, "disponible": 0}, "PPII": {"total": 34, "vendido": 34, "disponible": 0}}, "A1": {"PPI": {"total": 1, "vendido": 0, "disponible": 1}, "PPII": {"total": 1, "vendido": 0, "disponible": 1}}, "B": {"PPI": {"total": 21, "vendido": 21, "disponible": 0}, "PPII": {"total": 21, "vendido": 21, "disponible": 0}}, "B1": {"PPI": {"total": 12, "vendido": 12, "disponible": 0}, "PPII": {"total": 12, "vendido": 6, "disponible": 6}}, "C": {"PPI": {"total": 35, "vendido": 30, "disponible": 5}, "PPII": {"total": 35, "vendido": 3, "disponible": 32}}, "D": {"PPI": {"total": 35, "vendido": 32, "disponible": 3}, "PPII": {"total": 35, "vendido": 5, "disponible": 30}}, "E": {"PPI": {"total": 2, "vendido": 2, "disponible": 0}, "PPII": {"total": 2, "vendido": 2, "disponible": 0}}};
+const fmt=n=>Number(n).toLocaleString('es-CL');
+function drawTipos(p){
+ const el=document.getElementById('tipos');
+ el.innerHTML=Object.entries(T).map(([t,x])=>{
+   let v=0,d=0;
+   if(p==='TODOS'){v=x.PPI.vendido+x.PPII.vendido;d=x.PPI.disponible+x.PPII.disponible}
+   else {v=x[p].vendido;d=x[p].disponible}
+   let total=(p==='TODOS')?x.PPI.total+x.PPII.total:x[p].total;
+   return '<div class="tipo"><b>Tipología '+t+'</b><div class="muted" style="margin-top:10px">Total: <b>'+fmt(total)+'</b></div><div class="muted">Vendido: <b>'+fmt(v)+'</b></div><div class="muted">Disponible: <b>'+fmt(d)+'</b></div></div>';
+ }).join('');
+ document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+}
+function render(){
+ const p=document.getElementById('sel').value,d=D[p],vp=d.vendido/d.total*100,dp=d.disponible/d.total*100;
+ document.getElementById('total').textContent=fmt(d.total);document.getElementById('vendido').textContent=fmt(d.vendido);document.getElementById('disponible').textContent=fmt(d.disponible);
+ document.getElementById('vpct').textContent=vp.toFixed(1)+'% del total';document.getElementById('dpct').textContent=dp.toFixed(1)+'% del total';
+ document.getElementById('vbar').style.width=vp+'%';document.getElementById('dbar').style.width=dp+'%';drawTipos(p);
+}
+document.getElementById('tabs').innerHTML='<button data-p="TODOS">Todos</button><button data-p="PPI">PPI</button><button data-p="PPII">PPII</button>';
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>drawTipos(b.dataset.p)));
+document.getElementById('sel').addEventListener('change',render);render();
+</script>
+
+<div class="card" style="margin-top:14px">
+  
+
+
+<h2>Evolución y proyección de vendidos y disponibles</h2>
+  <div class="muted" style="margin-bottom:10px">
+    Datos reales hasta septiembre de 2026 y proyección según el promedio de ventas de los últimos 6 meses.
+  </div>
+  <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <svg viewBox="0 0 900 390" role="img" aria-label="Evolución y proyección de vendidos y disponibles" style="width:100%;height:auto;display:block">
+<line x1="55" y1="335.0" x2="875" y2="335.0" stroke="#e2e8f0"/>
+<text x="47" y="339.0" text-anchor="end" font-size="11" fill="#64748b">0</text>
+<line x1="55" y1="257.5" x2="875" y2="257.5" stroke="#e2e8f0"/>
+<text x="47" y="261.5" text-anchor="end" font-size="11" fill="#64748b">70</text>
+<line x1="55" y1="180.0" x2="875" y2="180.0" stroke="#e2e8f0"/>
+<text x="47" y="184.0" text-anchor="end" font-size="11" fill="#64748b">140</text>
+<line x1="55" y1="102.5" x2="875" y2="102.5" stroke="#e2e8f0"/>
+<text x="47" y="106.5" text-anchor="end" font-size="11" fill="#64748b">210</text>
+<line x1="55" y1="25.0" x2="875" y2="25.0" stroke="#e2e8f0"/>
+<text x="47" y="29.0" text-anchor="end" font-size="11" fill="#64748b">280</text>
+<path d="M 55.0 332.8 L 74.1 329.5 L 93.1 328.4 L 112.2 322.8 L 131.3 317.3 L 150.3 315.1 L 169.4 310.6 L 188.5 307.3 L 207.6 302.9 L 226.6 297.4 L 245.7 292.9 L 264.8 286.3 L 283.8 245.3 L 302.9 245.3 L 322.0 228.7 L 341.0 207.7 L 360.1 201.0 L 379.2 192.2 L 398.3 187.8 L 417.3 176.7 L 436.4 168.9 L 455.5 166.7 L 474.5 162.3 L 493.6 156.8 L 512.7 153.4 L 531.7 143.5 L 550.8 133.5 L 569.9 123.5 L 589.0 121.3 L 608.0 118.0 L 627.1 111.4" fill="none" stroke="#2563eb" stroke-width="3"/>
+<path d="M 55.0 27.2 L 74.1 30.5 L 93.1 31.6 L 112.2 37.2 L 131.3 42.7 L 150.3 44.9 L 169.4 49.4 L 188.5 52.7 L 207.6 57.1 L 226.6 62.6 L 245.7 67.1 L 264.8 73.7 L 283.8 114.7 L 302.9 114.7 L 322.0 131.3 L 341.0 152.3 L 360.1 159.0 L 379.2 167.8 L 398.3 172.2 L 417.3 183.3 L 436.4 191.1 L 455.5 193.3 L 474.5 197.7 L 493.6 203.2 L 512.7 206.6 L 531.7 216.5 L 550.8 226.5 L 569.9 236.5 L 589.0 238.7 L 608.0 242.0 L 627.1 248.6" fill="none" stroke="#16a34a" stroke-width="3"/>
+<path d="M 627.1 111.4 L 646.2 104.4 L 665.2 97.3 L 684.3 90.3 L 703.4 83.3 L 722.4 76.3 L 741.5 69.3 L 760.6 62.3 L 779.7 55.2 L 798.7 48.2 L 817.8 41.3 L 836.9 34.2 L 855.9 27.2 L 875.0 25.0" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="8 6"/>
+<path d="M 627.1 248.6 L 646.2 255.6 L 665.2 262.7 L 684.3 269.7 L 703.4 276.7 L 722.4 283.7 L 741.5 290.7 L 760.6 297.7 L 779.7 304.8 L 798.7 311.8 L 817.8 318.7 L 836.9 325.8 L 855.9 332.8 L 875.0 335.0" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="8 6"/>
+<text x="55.0" y="365" text-anchor="middle" font-size="10" fill="#64748b">2024/03</text>
+<text x="112.2" y="365" text-anchor="middle" font-size="10" fill="#64748b">2024/06</text>
+<text x="169.4" y="365" text-anchor="middle" font-size="10" fill="#64748b">2024/09</text>
+<text x="226.6" y="365" text-anchor="middle" font-size="10" fill="#64748b">2024/12</text>
+<text x="283.8" y="365" text-anchor="middle" font-size="10" fill="#64748b">2025/03</text>
+<text x="341.0" y="365" text-anchor="middle" font-size="10" fill="#64748b">2025/06</text>
+<text x="398.3" y="365" text-anchor="middle" font-size="10" fill="#64748b">2025/09</text>
+<text x="455.5" y="365" text-anchor="middle" font-size="10" fill="#64748b">2025/12</text>
+<text x="512.7" y="365" text-anchor="middle" font-size="10" fill="#64748b">2026/03</text>
+<text x="569.9" y="365" text-anchor="middle" font-size="10" fill="#64748b">2026/06</text>
+<text x="627.1" y="365" text-anchor="middle" font-size="10" fill="#64748b">2026/09</text>
+<text x="684.3" y="365" text-anchor="middle" font-size="10" fill="#64748b">2026/12</text>
+<text x="741.5" y="365" text-anchor="middle" font-size="10" fill="#64748b">2027/03</text>
+<text x="798.7" y="365" text-anchor="middle" font-size="10" fill="#64748b">2027/06</text>
+<text x="855.9" y="365" text-anchor="middle" font-size="10" fill="#64748b">2027/09</text>
+<text x="875.0" y="365" text-anchor="middle" font-size="10" fill="#64748b">2027/10</text>
+<line x1="55" y1="335" x2="875" y2="335" stroke="#94a3b8"/>
+<text x="55" y="15" font-size="11" fill="#475569">Unidades</text>
+<line x1="600" y1="20" x2="625" y2="20" stroke="#2563eb" stroke-width="3"/><text x="630" y="24" font-size="11" fill="#475569">Vendido</text>
+<line x1="695" y1="20" x2="720" y2="20" stroke="#16a34a" stroke-width="3"/><text x="725" y="24" font-size="11" fill="#475569">Disponible</text>
+<line x1="800" y1="20" x2="825" y2="20" stroke="#64748b" stroke-width="3" stroke-dasharray="8 6"/><text x="830" y="24" font-size="11" fill="#475569">Proyección</text>
+</svg>
+  </div>
+  <div class="muted" style="margin-top:8px;font-size:12px">
+    Promedio últimos 6 meses: <b>6.3 unidades/mes</b>. Línea continua: real · Línea segmentada: proyección.
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h2>Unidades disponibles</h2>
+  <div class="muted" style="margin-bottom:10px">
+    Incluye las unidades disponibles y las bloqueadas consideradas dentro de Disponible.
+  </div>
+  <div class="filters" style="margin-bottom:10px">
+    <button id="ubAll" class="active">Todos</button>
+    <button id="ubPPI">PPI</button>
+    <button id="ubPPII">PPII</button>
+    <input id="ubSearch" type="search" placeholder="Buscar depto, torre o tipología"
+      style="flex:2 1 220px;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;">
+  </div>
+  <div id="unitsCount" class="muted" style="margin-bottom:8px"></div>
+  <div class="table-container" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table id="unitsTable" style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:8px">Proyecto</th>
+          <th style="text-align:left;padding:8px">Depto</th>
+          <th style="text-align:left;padding:8px">Torre</th>
+          <th style="text-align:left;padding:8px">Piso</th>
+          <th style="text-align:left;padding:8px">Tipología</th>
+          <th style="text-align:left;padding:8px">Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const UNIDADES_DISPONIBLES = {"PPI": [{"numero": "203", "depto": "203H", "torre": "H", "piso": "2", "tipologia": "C", "estado": "Bloqueada"}, {"numero": "204", "depto": "204H", "torre": "H", "piso": "2", "tipologia": "D", "estado": "Bloqueada"}, {"numero": "104", "depto": "104J", "torre": "J", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "301", "depto": "301K", "torre": "K", "piso": "3", "tipologia": "A1", "estado": "Disponible"}, {"numero": "503", "depto": "503K", "torre": "K", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "503", "depto": "503L", "torre": "L", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "103", "depto": "103M", "torre": "M", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "403", "depto": "403M", "torre": "M", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404N", "torre": "N", "piso": "4", "tipologia": "D", "estado": "Disponible"}], "PPII": [{"numero": "103", "depto": "103A", "torre": "A", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104A", "torre": "A", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "202", "depto": "202A", "torre": "A", "piso": "2", "tipologia": "B1", "estado": "Disponible"}, {"numero": "203", "depto": "203A", "torre": "A", "piso": "2", "tipologia": "C", "estado": "Disponible"}, {"numero": "204", "depto": "204A", "torre": "A", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "303", "depto": "303A", "torre": "A", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "304", "depto": "304A", "torre": "A", "piso": "3", "tipologia": "D", "estado": "Disponible"}, {"numero": "403", "depto": "403A", "torre": "A", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404A", "torre": "A", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503A", "torre": "A", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504A", "torre": "A", "piso": "5", "tipologia": "D", "estado": "Disponible"}, {"numero": "103", "depto": "103B", "torre": "B", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104B", "torre": "B", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "202", "depto": "202B", "torre": "B", "piso": "2", "tipologia": "B1", "estado": "Disponible"}, {"numero": "203", "depto": "203B", "torre": "B", "piso": "2", "tipologia": "C", "estado": "Disponible"}, {"numero": "204", "depto": "204B", "torre": "B", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "301", "depto": "301B", "torre": "B", "piso": "3", "tipologia": "A1", "estado": "Disponible"}, {"numero": "302", "depto": "302B", "torre": "B", "piso": "3", "tipologia": "B1", "estado": "Disponible"}, {"numero": "303", "depto": "303B", "torre": "B", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "304", "depto": "304B", "torre": "B", "piso": "3", "tipologia": "D", "estado": "Disponible"}, {"numero": "403", "depto": "403B", "torre": "B", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404B", "torre": "B", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503B", "torre": "B", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504B", "torre": "B", "piso": "5", "tipologia": "D", "estado": "Disponible"}, {"numero": "103", "depto": "103C", "torre": "C", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104C", "torre": "C", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "202", "depto": "202C", "torre": "C", "piso": "2", "tipologia": "B1", "estado": "Disponible"}, {"numero": "204", "depto": "204C", "torre": "C", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "303", "depto": "303C", "torre": "C", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "304", "depto": "304C", "torre": "C", "piso": "3", "tipologia": "D", "estado": "Disponible"}, {"numero": "403", "depto": "403C", "torre": "C", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404C", "torre": "C", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503C", "torre": "C", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504C", "torre": "C", "piso": "5", "tipologia": "D", "estado": "Disponible"}, {"numero": "103", "depto": "103D", "torre": "D", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104D", "torre": "D", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "203", "depto": "203D", "torre": "D", "piso": "2", "tipologia": "C", "estado": "Disponible"}, {"numero": "303", "depto": "303D", "torre": "D", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "403", "depto": "403D", "torre": "D", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404D", "torre": "D", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503D", "torre": "D", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "103", "depto": "103E", "torre": "E", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104E", "torre": "E", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "204", "depto": "204E", "torre": "E", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "302", "depto": "302E", "torre": "E", "piso": "3", "tipologia": "B1", "estado": "Disponible"}, {"numero": "303", "depto": "303E", "torre": "E", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "304", "depto": "304E", "torre": "E", "piso": "3", "tipologia": "D", "estado": "Disponible"}, {"numero": "403", "depto": "403E", "torre": "E", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404E", "torre": "E", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503E", "torre": "E", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504E", "torre": "E", "piso": "5", "tipologia": "D", "estado": "Disponible"}, {"numero": "103", "depto": "103F", "torre": "F", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104F", "torre": "F", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "203", "depto": "203F", "torre": "F", "piso": "2", "tipologia": "C", "estado": "Disponible"}, {"numero": "204", "depto": "204F", "torre": "F", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "303", "depto": "303F", "torre": "F", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "403", "depto": "403F", "torre": "F", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404F", "torre": "F", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503F", "torre": "F", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504F", "torre": "F", "piso": "5", "tipologia": "D", "estado": "Disponible"}, {"numero": "103", "depto": "103G", "torre": "G", "piso": "1", "tipologia": "C", "estado": "Disponible"}, {"numero": "104", "depto": "104G", "torre": "G", "piso": "1", "tipologia": "D", "estado": "Disponible"}, {"numero": "204", "depto": "204G", "torre": "G", "piso": "2", "tipologia": "D", "estado": "Disponible"}, {"numero": "302", "depto": "302G", "torre": "G", "piso": "3", "tipologia": "B1", "estado": "Disponible"}, {"numero": "303", "depto": "303G", "torre": "G", "piso": "3", "tipologia": "C", "estado": "Disponible"}, {"numero": "403", "depto": "403G", "torre": "G", "piso": "4", "tipologia": "C", "estado": "Disponible"}, {"numero": "404", "depto": "404G", "torre": "G", "piso": "4", "tipologia": "D", "estado": "Disponible"}, {"numero": "503", "depto": "503G", "torre": "G", "piso": "5", "tipologia": "C", "estado": "Disponible"}, {"numero": "504", "depto": "504G", "torre": "G", "piso": "5", "tipologia": "D", "estado": "Disponible"}]};
+let unidadProyecto = 'TODOS';
+
+function renderUnidades() {
+  const q = (document.getElementById('ubSearch').value || '').toLowerCase().trim();
+  const rows = [];
+  for (const p of ['PPI','PPII']) {
+    if (unidadProyecto !== 'TODOS' && unidadProyecto !== p) continue;
+    for (const u of UNIDADES_DISPONIBLES[p]) {
+      const hay = [p,u.depto,u.torre,u.piso,u.tipologia,u.estado].join(' ').toLowerCase();
+      if (!q || hay.includes(q)) rows.push([p,u]);
+    }
+  }
+  rows.sort((a,b) => {
+    if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+    return (a[1].torre + a[1].depto).localeCompare(b[1].torre + b[1].depto, 'es', {numeric:true});
+  });
+  const tbody = document.querySelector('#unitsTable tbody');
+  tbody.innerHTML = rows.map(([p,u]) => `
+    <tr>
+      <td style="padding:8px;border-top:1px solid #e2e8f0">${p}</td>
+      <td style="padding:8px;border-top:1px solid #e2e8f0"><b>${u.depto}</b></td>
+      <td style="padding:8px;border-top:1px solid #e2e8f0">${u.torre}</td>
+      <td style="padding:8px;border-top:1px solid #e2e8f0">${u.piso}</td>
+      <td style="padding:8px;border-top:1px solid #e2e8f0">${u.tipologia}</td>
+      <td style="padding:8px;border-top:1px solid #e2e8f0">${u.estado}</td>
+    </tr>`).join('');
+  document.getElementById('unitsCount').textContent = `${rows.length} unidades`;
+}
+
+['ubAll','ubPPI','ubPPII'].forEach(id => document.getElementById(id).addEventListener('click', () => {
+  unidadProyecto = id === 'ubAll' ? 'TODOS' : id.replace('ub','');
+  document.querySelectorAll('#ubAll,#ubPPI,#ubPPII').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  renderUnidades();
+}));
+document.getElementById('ubSearch').addEventListener('input', renderUnidades);
+renderUnidades();
+</script>
+</body></html>
